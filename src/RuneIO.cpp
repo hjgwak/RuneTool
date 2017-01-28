@@ -74,7 +74,7 @@ vector<Rune> ReadRune(const string& file_name) {
 
                     new_rune->setOpt(opt, value);
                 }
-                new_rune->setOpt(main, 0, true);
+                if (main != OptType::none) new_rune->setOpt(main, 0, true);
             } else if (cnt == 6) {
                 monster = tokens[cnt];
                 new_rune->setMonster(monster);

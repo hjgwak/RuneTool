@@ -182,10 +182,11 @@ void writeRunes(const string& file_name, bool multi) {
 
     ofstream os(file_name, ofstream::out | ofstream::app);
     if (!os.is_open()) {
-        Error("[RuneIO][WriteRune] " + file_name + " was open failed.");
+        Error("[programs][WriteRunes] " + file_name + " was open failed.");
         exit(-1);
     }
     WriteRune(runes, os);
+    writeRemainIDs(ids, file_name);
     os.close();
 }
 
@@ -205,3 +206,27 @@ void showRune(const int id, const RuneType type, const int num, const int star, 
     WriteRune(toWrite, cout);
 }
 
+void removeRune(const vector<int>& ids, const string &file_name) {
+    vector<Rune> runes = ReadRune(file_name);
+    vector<Rune> toWrite;
+    vector<int> rids = getRemainIDs(file_name);
+
+    vector<Rune>::iterator v_it = runes.begin();
+    for (; v_it != runes.end(); ++v_it) {
+        if (find(ids.begin(), ids.end(), v_it->getID()) != ids.end()) {
+            rids.push_back(v_it->getID());
+            continue;
+        }
+        toWrite.push_back(*v_it);
+    }
+
+    ofstream os(file_name, ofstream::out);
+    if (!os.is_open()) {
+        Error("[programs][removeRune] " + file_name + " was open failed.");
+        exit(-1);
+    }
+
+    WriteRune(toWrite, os);
+    writeRemainIDs(rids, file_name);
+    os.close();
+}

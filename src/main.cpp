@@ -5,7 +5,19 @@
 
 using namespace std;
 
-void printUSAGE() {
+static vector<string> tokenizer(string& line, char delim) {
+    istringstream ss(line);
+    vector<string> tokens;
+    string token;
+
+    while (getline(ss, token, delim)) {
+        tokens.push_back(token);
+    }
+
+    return tokens;
+}
+
+static void printUSAGE() {
     cout << "USAGE: ./RuneTool [program] [opts]" << endl;
     cout << "    program:" << endl;
     cout << "        write (file_name, default RuneDB.txt)" << endl;
@@ -14,9 +26,12 @@ void printUSAGE() {
     cout << "            -rune_type RuneType, show runes which have given RuneType" << endl;
     cout << "            -rune_num #, show runes which have given rune_number"<< endl;
     cout << "            -star #, show runes which have given star" << endl;
+    cout << "        remove (opts) (file_name, default RuneDB.txt)" << endl;
+    cout << "            -id #, remove rune which has given ID" << endl;
+    cout << "                   multiple ids can be given by using ',' character to delimiter" << endl;
 }
 
-int getOpt(int argc, char* argv[], string opt) {
+static int getOpt(int argc, char* argv[], string opt) {
     for (int i = 0; i < argc; ++i) {
         if (strcmp(argv[i], opt.c_str()) == 0) return i;
     }
@@ -51,6 +66,26 @@ int main(int argc, char* argv[]) {
             string file_name = (argc % 2 == 0) ? "RuneDB.txt" : argv[argc - 1];
 
             showRune(id, type, num, star, file_name);
+        }
+    } else if (strcmp(argv[1], "remove") == 0) {
+        if (argc > 5 || argc < 4) {
+            printUSAGE();
+        } else {
+            int pos;
+            if ((pos = getOpt(argc, argv, "-id")) == -1) {
+                printUSAGE();
+            } else {
+                string temp = argv[pos + 1];
+                vector<string> tokens = tokenizer(temp, ',');
+                vector<int> ids;
+                for (vector<string>::iterator v_it = tokens.begin();
+                        v_it != tokens.end(); ++v_it) {
+                    ids.push_back(stoi(*v_it));
+                }
+
+                string file_name = (argc == 5) ? argv[argc - 1] : "RuneDB.txt";
+                removeRune(ids, file_name);
+            }
         }
     }
 
