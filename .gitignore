@@ -27,3 +27,12 @@
 *.exe
 *.out
 *.app
+
+#ouputs
+RuneTool
+
+#CLion
+.idea/*
+
+#Tests
+tests/*
