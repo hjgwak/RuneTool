@@ -190,13 +190,15 @@ void writeRunes(const string& file_name, bool multi) {
     os.close();
 }
 
-void showRune(const int id, const RuneType type, const int num, const int star, const string& file_name) {
+void showRune(const vector<int>& ids, const RuneType type, const int num, const int star, const string& file_name) {
     vector<Rune> runes = ReadRune(file_name);
     vector<Rune> toWrite;
 
+    bool id_opt = (find(ids.begin(), ids.end(), "-1") == ids.end());
+
     vector<Rune>::iterator v_it = runes.begin();
     for (; v_it != runes.end(); ++v_it) {
-        if (id != -1 && v_it->getID() != id) continue;
+        if (id_opt && find(ids.begin(), ids.end(), v_it->getID()) != ids.end()) continue;
         if (type != RuneType::none && v_it->getType() != type) continue;
         if (num != -1 && v_it->getPosition() != num) continue;
         if (star != -1 && v_it->getStar() != star) continue;
@@ -229,4 +231,20 @@ void removeRune(const vector<int>& ids, const string &file_name) {
     WriteRune(toWrite, os);
     writeRemainIDs(rids, file_name);
     os.close();
+}
+
+void combination(const vector<RuneType> &sets, const map<OptType, int> &filter, const string &file_name) {
+    int sum = 0;
+    for (vector<RuneType>::const_iterator it = sets.begin();
+            it != sets.end(); ++it) {
+        sum += Rune::runeSetNum[*it];
+    }
+    bool strict = (sum == 6);
+
+    vector<Rune> runes = ReadRune(file_name);
+    map<int, vector<Rune> > pos_map = {{1, {}}, {2, {}}, {3, {}}, {4, {}}, {5, {}}, {6, {}}};
+    for (vector<Rune>::iterator v_it = runes.begin(); v_it != runes.end(); ++v_it) {
+        if (strict && find(sets.begin(), sets.end(), v_it->getType()) == sets.end()) continue;
+        pos_map[v_it->getPosition()].push_back(*v_it);
+    }
 }

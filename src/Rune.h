@@ -45,6 +45,9 @@ public:
     static std::string getTypeString(RuneType type);
     static OptType convertOptString(std::string opt);
     static RuneType convertTypeString(std::string type);
+
+    static std::map<RuneType, int> runeSetNum;
+    static std::map<RuneType, std::pair<OptType, int> > runeAbility;
 private:
     int id;
     int star;
@@ -53,6 +56,25 @@ private:
     OptType main;
     std::map<OptType, int> properties;
     std::string monster;
+};
+
+class RuneSet {
+    // Constructors
+    RuneSet();
+
+    // Setters
+    void addRune(const Rune& rune);
+    void removeRune(const int pos);
+    void applySet();
+    void cancelSet();
+
+    // Getters;
+    int getOpt(const OptType opt) const;
+private:
+    bool set_applied;
+    std::map<int, Rune> rune_map;
+    std::map<OptType, int> properties;
+    std::map<RuneType, int> rune_cnt;
 };
 
 
