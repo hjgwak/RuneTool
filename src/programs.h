@@ -8,7 +8,7 @@
 #include "Rune.h"
 #include <string>
 
-void writeOneRune(const std::string& file_name = "RuneDB.txt");
+void writeRunes(const std::string& file_name = "RuneDB.txt", bool multi = true);
 void showRune(const int id = -1, const RuneType type = RuneType::none,
               const int num = -1, const int star = -1, const std::string& file_name = "RuneDB.txt");
 

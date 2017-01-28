@@ -109,13 +109,3 @@ void WriteRune(const vector<Rune>& runes, ostream& os) {
         os << v_it->getMonster() << endl;
     }
 }
-
-void WriteOneRuneToFile(const Rune& rune, const string& file_name) {
-    ofstream rune_f(file_name, ofstream::out | ofstream::app);
-    if (!rune_f.is_open()) {
-        Error("[RuneIO][WriteRune] " + file_name + " was open failed.");
-        exit(-1);
-    }
-    WriteRune({rune}, rune_f);
-    rune_f.close();
-}

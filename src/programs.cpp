@@ -5,6 +5,7 @@
 #include "programs.h"
 #include "RuneIO.h"
 #include "Rune.h"
+#include "Error.h"
 #include <iostream>
 #include <algorithm>
 
@@ -93,20 +94,11 @@ static void writeRemainIDs(const vector<int>& r_ids, const string& file_name) {
     r_id_f.close();
 }
 
-void writeOneRune(const string& file_name) {
+static Rune inputRune(const int id, const string& file_name) {
     string temp;
     int star, position;
     RuneType type;
     OptType main;
-
-    vector<int> ids = getRemainIDs(file_name);
-    int id;
-    if (ids.empty()) {
-        id = 1;
-    } else {
-        id = ids[0];
-        ids.erase(ids.begin());
-    }
 
     cout << "Star (1 ~ 6): ";
     getline(cin, temp);
@@ -156,12 +148,45 @@ void writeOneRune(const string& file_name) {
         new_rune.setMonster(temp);
     }
 
+    return new_rune;
+}
+
+static int getNewID(vector<int>& ids) {
+    int id = (ids.empty()) ? 1 : ids[0];
+    if (!ids.empty()) {
+        ids.erase(ids.begin());
+    }
     if (ids.empty()) {
         ids.push_back(id + 1);
     }
 
-    WriteOneRuneToFile(new_rune, file_name);
-    writeRemainIDs(ids, file_name);
+    return id;
+}
+
+void writeRunes(const string& file_name, bool multi) {
+    vector<int> ids = getRemainIDs(file_name);
+    vector<Rune> runes;
+    bool cont = multi;
+    do {
+        int id = getNewID(ids);
+        string temp;
+
+        runes.push_back(inputRune(id, file_name));
+
+        cout << "Continue? [Y/N]: ";
+        while (temp != "Y" && temp != "y" && temp != "N" && temp != "n") {
+            getline(cin, temp);
+            if (temp == "N" || temp == "n") cont = false;
+        }
+    } while(cont);
+
+    ofstream os(file_name, ofstream::out | ofstream::app);
+    if (!os.is_open()) {
+        Error("[RuneIO][WriteRune] " + file_name + " was open failed.");
+        exit(-1);
+    }
+    WriteRune(runes, os);
+    os.close();
 }
 
 void showRune(const int id, const RuneType type, const int num, const int star, const string& file_name) {

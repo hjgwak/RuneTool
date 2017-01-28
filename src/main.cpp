@@ -33,9 +33,9 @@ int main(int argc, char* argv[]) {
         if (argc > 3) {
             printUSAGE();
         } else if (argc == 3) {
-            writeOneRune(argv[2]);
+            writeRunes(argv[2]);
         } else {
-            writeOneRune();
+            writeRunes();
         }
     } else if (strcmp(argv[1], "show") == 0) {
         if (argc > 9) {
