@@ -49,7 +49,7 @@ static map<OptType, vector<int> > maxValueMap = {
 
 // Constructors
 Rune::Rune() {
-
+    this->id = -1;
 }
 
 Rune::Rune(const int id, const int star, const int position, const RuneType type, const OptType main) {
@@ -255,6 +255,7 @@ void RuneSet::addRune(const Rune &rune) {
 
 void RuneSet::removeRune(const int pos) {
     if (this->rune_map.find(pos) != this->rune_map.end()) {
+        this->cancelSet();
         vector<OptType> opts = this->rune_map[pos].getKey();
         for (vector<OptType>::iterator it = opts.begin(); it != opts.end(); ++it) {
             this->properties[*it] -= this->rune_map[pos].getOpt(*it);
@@ -300,13 +301,10 @@ void RuneSet::cancelSet() {
     }
 }
 
+int RuneSet::getRuneCnt(const RuneType type) const {
+    return (this->rune_cnt.find(type) == this->rune_cnt.end()) ? 0 : this->rune_cnt.at(type);
+}
 
-
-
-
-
-
-
-
-
-
+Rune RuneSet::getRune(const int pos) const {
+    return (this->rune_map.find(pos) == this->rune_map.end()) ? Rune() : this->rune_map.at(pos);
+}

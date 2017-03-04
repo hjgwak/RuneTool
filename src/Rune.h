@@ -59,6 +59,7 @@ private:
 };
 
 class RuneSet {
+public:
     // Constructors
     RuneSet();
 
@@ -70,6 +71,8 @@ class RuneSet {
 
     // Getters;
     int getOpt(const OptType opt) const;
+    int getRuneCnt(const RuneType type) const;
+    Rune getRune(const int pos) const;
 private:
     bool set_applied;
     std::map<int, Rune> rune_map;

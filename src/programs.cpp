@@ -194,7 +194,7 @@ void showRune(const vector<int>& ids, const RuneType type, const int num, const 
     vector<Rune> runes = ReadRune(file_name);
     vector<Rune> toWrite;
 
-    bool id_opt = (find(ids.begin(), ids.end(), "-1") == ids.end());
+    bool id_opt = (find(ids.begin(), ids.end(), -1) == ids.end());
 
     vector<Rune>::iterator v_it = runes.begin();
     for (; v_it != runes.end(); ++v_it) {
@@ -233,6 +233,60 @@ void removeRune(const vector<int>& ids, const string &file_name) {
     os.close();
 }
 
+static bool isValid(const vector<RuneType>& sets, RuneSet& rune_set, bool strict) {
+    vector<RuneType>::const_iterator c_it = sets.begin();
+    for (; c_it != sets.end(); ++c_it) {
+        if (strict && rune_set.getRuneCnt(*c_it) > Rune::runeSetNum[*c_it]) return false;
+        else if (!strict && rune_set.getRuneCnt(*c_it) < Rune::runeSetNum[*c_it]) return false;
+    }
+    return true;
+}
+
+static void RecursiveCombination(const vector<RuneType>& sets, const map<OptType, int>& filter,
+                                 const map<int, vector<Rune> >& pos_map, RuneSet& rune_set, int pos, bool strict) {
+    if (pos > 6) {
+        if (!isValid(sets, rune_set, strict)) return ;
+        rune_set.applySet();
+        map<OptType, int>::const_iterator c_it = filter.begin();
+        for (; c_it != filter.end(); ++c_it) {
+            if (rune_set.getOpt(c_it->first) < c_it->second) {
+                rune_set.cancelSet();
+                return ;
+            }
+        }
+
+        cout << "Runes: ";
+        for (int i = 1; i <= 6; ++i) {
+            if (i > 1) cout << ", ";
+            cout << i << ": [" << rune_set.getRune(i).getID() << "]";
+        }
+        cout << endl;
+
+        vector<OptType> opts = {OptType::ATK, OptType::SPD, OptType::DEF, OptType::HP,
+                                OptType::CRI_RATE, OptType::CRI_DMG, OptType::ACC, OptType::RES};
+        cout << "\t";
+        for (vector<OptType>::iterator v_it = opts.begin(); v_it != opts.end(); ++v_it) {
+            if (v_it != opts.begin()) cout << ", ";
+            cout << Rune::getOptString(*v_it) << ": " << rune_set.getOpt(*v_it);
+        }
+        cout << endl;
+
+        rune_set.cancelSet();
+        return ;
+    }
+//cout << "[RecursiveCombination] Position" << pos << " ADD" << endl;
+    if (pos_map.at(pos).size() == 0) {
+        RecursiveCombination(sets, filter, pos_map, rune_set, pos + 1, strict);
+    } else {
+        vector<Rune>::const_iterator c_it = pos_map.at(pos).begin();
+        for (; c_it != pos_map.at(pos).end(); ++c_it) {
+            rune_set.addRune(*c_it);
+            if (strict && !isValid(sets, rune_set, strict)) continue;
+            RecursiveCombination(sets, filter, pos_map, rune_set, pos + 1, strict);
+        }
+    }
+}
+
 void combination(const vector<RuneType> &sets, const map<OptType, int> &filter, const string &file_name) {
     int sum = 0;
     for (vector<RuneType>::const_iterator it = sets.begin();
@@ -240,11 +294,15 @@ void combination(const vector<RuneType> &sets, const map<OptType, int> &filter, 
         sum += Rune::runeSetNum[*it];
     }
     bool strict = (sum == 6);
-
+//cout << "[combination]Here1, strict: " << (strict ? "True" : "False") << endl;
     vector<Rune> runes = ReadRune(file_name);
     map<int, vector<Rune> > pos_map = {{1, {}}, {2, {}}, {3, {}}, {4, {}}, {5, {}}, {6, {}}};
     for (vector<Rune>::iterator v_it = runes.begin(); v_it != runes.end(); ++v_it) {
         if (strict && find(sets.begin(), sets.end(), v_it->getType()) == sets.end()) continue;
+//cout << "[combination]Here, add Rune: [" << v_it->getID() << "]" << endl;
         pos_map[v_it->getPosition()].push_back(*v_it);
     }
+
+    RuneSet rune_set;
+    RecursiveCombination(sets, filter, pos_map, rune_set, 1, strict);
 }

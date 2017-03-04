@@ -1,0 +1,3 @@
+/Users/Kelvin/Programming/gitHub/RuneTool/CMakeFiles/edit_cache.dir
+/Users/Kelvin/Programming/gitHub/RuneTool/CMakeFiles/rebuild_cache.dir
+/Users/Kelvin/Programming/gitHub/RuneTool/CMakeFiles/RuneTool.dir

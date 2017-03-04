@@ -90,6 +90,7 @@ vector<Rune> ReadRune(const string& file_name) {
 }
 
 void WriteRune(const vector<Rune>& runes, ostream& os) {
+    os << "ID\tType\tPos\tStar\tMain\tAdditional\tMonster" << endl;
     vector<Rune>::const_iterator v_it = runes.begin();
     for (; v_it != runes.end(); ++v_it) {
         os << v_it->getID() << "\t";
