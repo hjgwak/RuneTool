@@ -36,3 +36,6 @@ RuneTool
 
 #Tests
 tests/*
+
+#DBs
+*.txt
