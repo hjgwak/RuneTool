@@ -8,6 +8,8 @@
 #include "Error.h"
 #include <iostream>
 #include <algorithm>
+#include <thread>
+#include <mutex>
 
 using namespace std;
 
@@ -100,27 +102,35 @@ static Rune inputRune(const int id, const string& file_name) {
     RuneType type;
     OptType main;
 
-    cout << "Star (1 ~ 6): ";
-    getline(cin, temp);
-    star = stoi(temp);
+    do {
+        cout << "Star (1 ~ 6): ";
+        getline(cin, temp);
+        star = stoi(temp);
+    } while (star < 1 || star > 6);
 
-    cout << "Position (1 ~ 6): ";
-    getline(cin, temp);
-    position = stoi(temp);
+    do {
+        cout << "Position (1 ~ 6): ";
+        getline(cin, temp);
+        position = stoi(temp);
+    } while (position < 1 || position > 6);
 
-    cout << "RuneType" << endl;
-    cout << "    Energy, Fatal, Blade, Swift, Focus, Guard, Endure, Shield" << endl;
-    cout << "    Revenge, Will, Nemesis, Vampire, Destroy, Despair, Violent," << endl;
-    cout << "    Rage, Fight, Determination, Enhance, Accuracy, Tolerance" << endl;
-    cout << ": ";
-    getline(cin, temp);
+    do {
+        cout << "RuneType" << endl;
+        cout << "    Energy, Fatal, Blade, Swift, Focus, Guard, Endure, Shield" << endl;
+        cout << "    Revenge, Will, Nemesis, Vampire, Destroy, Despair, Violent," << endl;
+        cout << "    Rage, Fight, Determination, Enhance, Accuracy, Tolerance" << endl;
+        cout << ": ";
+        getline(cin, temp);
+    } while (Rune::convertTypeString(temp) == RuneType::none);
     type = Rune::convertTypeString(temp);
 
-    cout << "Main Option" << endl;
     vector<string> opts = getPossibleOpts(position);
-    cout << "    " << join(opts) << endl;
-    cout << ": ";
-    getline(cin, temp);
+    do {
+        cout << "Main Option" << endl;
+        cout << "    " << join(opts) << endl;
+        cout << ": ";
+        getline(cin, temp);
+    } while (find(opts.begin(), opts.end(), temp) == opts.end());
     main = Rune::convertOptString(temp);
 
     Rune new_rune(id, star, position, type, main);
@@ -128,11 +138,13 @@ static Rune inputRune(const int id, const string& file_name) {
     cout << "Additional Options,value" << endl;
     opts = getSubOptions(position);
     remove(opts, temp);
-    for (int i = 0; i < 4; ++i) {
-        cout << "OptionType (END = input -1 or input 4 options)";
-        cout << "    " << join(opts);
-        cout << ": ";
-        getline(cin, temp);
+    for (int i = 0; i < 5; ++i) {
+        do {
+            cout << "OptionType (END = input -1 or input 4 options)";
+            cout << "    " << join(opts);
+            cout << ": ";
+            getline(cin, temp);
+        } while(find(opts.begin(), opts.end(), temp) == opts.end() && temp != "-1");
         if (temp == "-1") break;
         remove(opts, temp);
         OptType opt = Rune::convertOptString(temp);
@@ -173,11 +185,11 @@ void writeRunes(const string& file_name, bool multi) {
 
         runes.push_back(inputRune(id, file_name));
 
-        cout << "Continue? [Y/N]: ";
-        while (temp != "Y" && temp != "y" && temp != "N" && temp != "n") {
+        do {
+            cout << "Continue? [Y/N]: ";
             getline(cin, temp);
             if (temp == "N" || temp == "n") cont = false;
-        }
+        } while (temp != "Y" && temp != "y" && temp != "N" && temp != "n");
     } while(cont);
 
     ofstream os(file_name, ofstream::out | ofstream::app);
@@ -198,13 +210,14 @@ void showRune(const vector<int>& ids, const RuneType type, const int num, const 
 
     vector<Rune>::iterator v_it = runes.begin();
     for (; v_it != runes.end(); ++v_it) {
-        if (id_opt && find(ids.begin(), ids.end(), v_it->getID()) != ids.end()) continue;
+        if (id_opt && find(ids.begin(), ids.end(), v_it->getID()) == ids.end()) continue;
         if (type != RuneType::none && v_it->getType() != type) continue;
         if (num != -1 && v_it->getPosition() != num) continue;
         if (star != -1 && v_it->getStar() != star) continue;
         toWrite.push_back(*v_it);
     }
 
+    cout << "ID\tType\tPos\tStar\tMain\tAdditional\tMonster" << endl;
     WriteRune(toWrite, cout);
 }
 
@@ -242,6 +255,8 @@ static bool isValid(const vector<RuneType>& sets, RuneSet& rune_set, bool strict
     return true;
 }
 
+mutex print_mtx;
+
 static void RecursiveCombination(const vector<RuneType>& sets, const map<OptType, int>& filter,
                                  const map<int, vector<Rune> >& pos_map, RuneSet& rune_set, int pos, bool strict) {
     if (pos > 6) {
@@ -255,6 +270,7 @@ static void RecursiveCombination(const vector<RuneType>& sets, const map<OptType
             }
         }
 
+        print_mtx.lock();
         cout << "Runes: ";
         for (int i = 1; i <= 6; ++i) {
             if (i > 1) cout << ", ";
@@ -270,6 +286,7 @@ static void RecursiveCombination(const vector<RuneType>& sets, const map<OptType
             cout << Rune::getOptString(*v_it) << ": " << rune_set.getOpt(*v_it);
         }
         cout << endl;
+        print_mtx.unlock();
 
         rune_set.cancelSet();
         return ;
@@ -287,7 +304,31 @@ static void RecursiveCombination(const vector<RuneType>& sets, const map<OptType
     }
 }
 
-void combination(const vector<RuneType> &sets, const map<OptType, int> &filter, const string &file_name) {
+mutex mtx;
+unsigned int r_index;
+
+void ThreadingFunc(const vector<RuneType>& sets, const map<OptType, int>& filter,
+                   const map<int, vector<Rune> >& pos_map, bool strict, int id) {
+    RuneSet rune_set;
+    while(true) {
+        mtx.lock();
+        if (r_index >= pos_map.at(1).size()) {
+            mtx.unlock();
+            break;
+        }
+
+        unsigned int cur_index = r_index;
+        r_index++;
+        mtx.unlock();
+        print_mtx.lock();
+        cout << "Thread" << id << ", start " << cur_index << "th rune." << endl;
+        print_mtx.unlock();
+        rune_set.addRune(pos_map.at(1).at(cur_index));
+        RecursiveCombination(sets, filter, pos_map, rune_set, 2, strict);
+    }
+}
+
+void combination(const vector<RuneType> &sets, const map<OptType, int> &filter, const int threads_n, const string &file_name) {
     int sum = 0;
     for (vector<RuneType>::const_iterator it = sets.begin();
             it != sets.end(); ++it) {
@@ -303,6 +344,15 @@ void combination(const vector<RuneType> &sets, const map<OptType, int> &filter, 
         pos_map[v_it->getPosition()].push_back(*v_it);
     }
 
-    RuneSet rune_set;
-    RecursiveCombination(sets, filter, pos_map, rune_set, 1, strict);
+    if (threads_n == 1) {
+        RuneSet rune_set;
+        RecursiveCombination(sets, filter, pos_map, rune_set, 1, strict);
+    } else {
+        r_index = 0;
+        vector<thread> threads;
+        for (int i = 0; i < threads_n; ++i) {
+            threads.push_back(thread(ThreadingFunc, ref(sets), ref(filter), ref(pos_map), strict, i+1));
+        }
+        for (auto& th : threads) th.join();
+    }
 }

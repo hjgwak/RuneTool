@@ -33,9 +33,13 @@ static void printUSAGE() {
     cout << "        combination (opts) (file_name, default RuneDB.txt)" << endl;
     cout << "            -set RuneType, combinations must include RuneType" << endl;
     cout << "                           multiple RuneTypes can be given by using ',' character to delimiter" << endl;
+    cout << "                 RuneTypes: Energy, Fatal, Blade, Swift, Focus, Guard, Endure, Shield, Revenge" << endl;
+    cout << "                            Will, Nemesis, Vampire, Destroy, Despair, Violent, Rage, Fight" << endl;
+    cout << "                            Determination, Enhance, Accuracy, Tolerance" << endl;
     cout << "            -filter OptType:value, combinations which have larger value of given OpyType then given value" << endl;
     cout << "                                   multiple filter can be given by using ',' character to delimiter" << endl;
     cout << "                    OptTypes: ATK, DEF, SPD, HP, CRI_RATE, CRI_DMG, ACC, RES" << endl;
+    cout << "            -thread #, the number of threads for computing combinations" << endl;
 }
 
 static int getOpt(int argc, char* argv[], string opt) {
@@ -118,9 +122,12 @@ int main(int argc, char* argv[]) {
                 vector<string> temp = tokenizer(tokens[i], ':');
                 filter[Rune::convertOptString(temp[0])] = stoi(temp[1]);
             }
+
+            int threads = (pos = getOpt(argc, argv, "-thread")) == -1 ? 1 : atoi(argv[pos + 1]);
+
             string file_name = (argc % 2 == 0) ? "RuneDB.txt" : argv[argc - 1];
 
-            combination(sets, filter, file_name);
+            combination(sets, filter, threads, file_name);
         }
     }
 
